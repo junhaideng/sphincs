@@ -9,7 +9,6 @@ import (
 type Lamport struct {
 	n    Size
 	hash Hash
-	sk   []byte
 }
 
 // NewLamportSignature returns lamport signature algorithm
@@ -41,7 +40,6 @@ func (l *Lamport) GenerateKey() ([]byte, []byte) {
 		private = append(private, sk...)
 		public = append(public, l.hash(sk)...)
 	}
-	l.sk = private
 	return private, public
 }
 
