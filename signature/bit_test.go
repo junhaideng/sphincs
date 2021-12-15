@@ -20,3 +20,17 @@ func TestBitCount(t *testing.T) {
 	var b uint64 = 'a' // 0110_0001
 	assert.Equal(bitCount(b), 7)
 }
+
+func TestToInt(t *testing.T) {
+	assert := assert.New(t)
+	bytes := [][]byte{
+		{0x1},
+		{0x1, 0x2},
+		{0x1, 0x2, 0x3, 0x4},
+		{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8},
+	}
+	res := []uint64{1, 258, 16909060, 72623859790382856}
+	for i := 0; i < len(bytes); i++ {
+		assert.Equal(res[i], toInt(bytes[i]))
+	}
+}
