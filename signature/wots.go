@@ -72,9 +72,8 @@ func (w *Winternitz) Sign(message []byte, sk []byte) []byte {
 	// w bits as an integer, so after hash the message
 	// there will be l1 integers
 	// and each integer <= 2^w-1
-	block := w.baseW(digest)
+	block := w.baseW(digest, w.l1)
 
-	// TODO calculate checksum, length should be l2
 	block = append(block, w.checksum(block)...)
 
 	l := w.l1 + w.l2
@@ -89,7 +88,7 @@ func (w *Winternitz) Sign(message []byte, sk []byte) []byte {
 
 func (w *Winternitz) Verify(message []byte, pk []byte, signature []byte) bool {
 	digest := w.hash(message)
-	block := w.baseW(digest)
+	block := w.baseW(digest, w.l1)
 
 	block = append(block, w.checksum(block)...)
 
@@ -113,43 +112,61 @@ func l2(t1, w int) int {
 
 // interprets an array of bytes as integers in base w.
 // w should be a divisor of 8, ensured by constructor `NewWinternitzSignature`
-func (w Winternitz) baseW(input []byte) []byte {
-	res := make([]byte, 0, len(input)*bitSize/w.w)
+func (w Winternitz) baseW(input []byte, length int) []byte {
+	res := make([]byte, length)
 
-	// for each bit
-	for i := 0; i < len(input); i++ {
-		b := input[i]
-		// split each bit
-		for j := 0; j < bitSize/w.w; j++ {
-			res = append(res, b>>(8-(j+1)*w.w)&(1<<w.w-1))
+	index := 0 // index in input
+
+	// index -> bit
+	var bit = input[index] // current work on
+
+	shift := bitSize
+	for i := 0; i < length; i++ {
+		if shift == 0 {
+			shift = bitSize
+			index++
+			bit = input[index]
 		}
+		res[i] = bit >> (shift - w.w) & (1<<w.w - 1)
+		shift -= w.w
+	}
+	return res
+}
+
+func ceil(n1, n2 int) int {
+	res := n1 / n2
+	if n1%n2 != 0 {
+		res += 1
 	}
 	return res
 }
 
 // checksum calculate checksum of base w byte array
+// 计算出来的 sum，首先进行填充，bit 数能够被 w 整除
 func (w Winternitz) checksum(input []byte) []byte {
 	var sum uint64
+
 	for i := 0; i < len(input); i++ {
 		sum += 1<<w.w - 1 - uint64(input[i])
 	}
 
+	count := bitCount(sum)
 	// make sure expected empty zero bits are the least significant bits
 	// or just think this is padding
-	sum = sum << (bitSize - (w.l2*w.w)%bitSize)
+	// eg: 1101_01 => 1101_0100, 1101_0001_110 => 1101_0001_1100_0000
+	if count%bitSize != 0 {
+		shift := (count/bitSize+1)*bitSize - count
+		sum = sum << shift
+	}
 
 	// convert sum to bytes
-	b := make([]byte, (w.l2*w.w+7)/8)
+	b := make([]byte, ceil(w.l2*w.w, bitSize))
+
 	for i := len(b) - 1; i >= 0; i-- {
 		b[i] = byte(sum & 0xff)
 		sum >>= 8
 	}
-	// /* Iterate over out in decreasing order, for big-endianness. */
-	//    for (i = outlen - 1; i >= 0; i--) {
-	//        out[i] = in & 0xff;
-	//        in = in >> 8;
-	//    }
 
 	// convert checksum to base w
-	return w.baseW(b)
+	return w.baseW(b, w.l2)
 }

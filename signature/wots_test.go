@@ -34,9 +34,9 @@ func newWinternitzSignature(w int, n Size) (*Winternitz, error) {
 func TestBaseW2(t *testing.T) {
 	assert := assert.New(t)
 	w, _ := newWinternitzSignature(2, Size256)
-	input := []byte("a") // 0110_0001
+	input := []byte{'a'} // 0110_0001
 	res := []byte{0x1, 0x2, 0x0, 0x1}
-	assert.Equal(res, w.baseW(input))
+	assert.Equal(res, w.baseW(input, 4))
 }
 
 func TestBaseW4(t *testing.T) {
@@ -44,7 +44,7 @@ func TestBaseW4(t *testing.T) {
 	w, _ := newWinternitzSignature(4, Size256)
 	input := []byte("a") // 0110_0001
 	res := []byte{0x6, 0x1}
-	assert.Equal(res, w.baseW(input))
+	assert.Equal(res, w.baseW(input, 2))
 }
 
 func TestBaseW8(t *testing.T) {
@@ -52,7 +52,17 @@ func TestBaseW8(t *testing.T) {
 	w, _ := newWinternitzSignature(8, Size256)
 	input := []byte("a") // 0110_0001
 	res := []byte{'a'}
-	assert.Equal(res, w.baseW(input))
+	assert.Equal(res, w.baseW(input, 1))
+}
+
+func TestChecksum2(t *testing.T) {
+	assert := assert.New(t)
+	w, _ := newWinternitzSignature(4, Size256)
+	input := []byte{0x6, 0x1} // 0110_0001
+	res := []byte{'a'}
+
+	cs := w.checksum(input)
+	assert.Equal(res, cs)
 }
 
 func TestWinternitzSignature(t *testing.T) {

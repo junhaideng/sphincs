@@ -14,3 +14,9 @@ func TestGetBit(t *testing.T) {
 		assert.Equal(r, bit, "should be equal, index: %d", i)
 	}
 }
+
+func TestBitCount(t *testing.T) {
+	assert := assert.New(t)
+	var b uint64 = 'a' // 0110_0001
+	assert.Equal(bitCount(b), 7)
+}
