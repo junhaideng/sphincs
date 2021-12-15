@@ -7,6 +7,7 @@ on:
       - "Makefile"
       - "go.mod"
       - "go.sum"
+      - ".github/workflows/**"
 
 jobs:
   go:
@@ -14,6 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
-      with:
-        go-version: "^1.17"
+        with:
+          go-version: "^1.17"
       - run: make test
