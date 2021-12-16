@@ -2,13 +2,14 @@ package signature
 
 import (
 	"crypto/rand"
+	"github.com/junhaideng/sphincs/hash"
 )
 
 // Lamport signature
 // reference: https://en.wikipedia.org/wiki/Lamport_signature
 type Lamport struct {
 	n    Size
-	hash Hash
+	hash hash.Hash
 }
 
 // NewLamportSignature returns lamport signature algorithm
@@ -16,9 +17,9 @@ func NewLamportSignature(n Size) (Signature, error) {
 	if n != Size256 && n != Size512 {
 		return nil, ErrSizeNotSupport
 	}
-	lp := &Lamport{n: n, hash: Sha256}
+	lp := &Lamport{n: n, hash: hash.Sha256}
 	if n == Size512 {
-		lp.hash = Sha512
+		lp.hash = hash.Sha512
 	}
 	return lp, nil
 }

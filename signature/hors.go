@@ -3,6 +3,7 @@ package signature
 import (
 	"crypto/rand"
 	"errors"
+	"github.com/junhaideng/sphincs/hash"
 )
 
 // Hors implements Hors OTS
@@ -15,7 +16,7 @@ type Hors struct {
 	// base = log2(t)
 	base int
 	k    int
-	hash Hash
+	hash hash.Hash
 }
 
 // NewHorsSignature return Hors signature algorithm
@@ -35,10 +36,10 @@ func NewHorsSignature(t, k int) (Signature, error) {
 		t:    1 << t,
 		base: t,
 		k:    k,
-		hash: Sha256,
+		hash: hash.Sha256,
 	}
 	if n == Size512 {
-		h.hash = Sha512
+		h.hash = hash.Sha512
 	}
 	return h, nil
 }

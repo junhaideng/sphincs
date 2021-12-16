@@ -1,4 +1,4 @@
-package signature
+package hash
 
 import (
 	"crypto/sha256"
@@ -22,8 +22,8 @@ func Sha512(b []byte) []byte {
 	return s.Sum(nil)
 }
 
-// hash message n times using hash function
-func hashTimes(message []byte, n int, hash Hash) []byte {
+// HashTimes hash message n times using hash function
+func HashTimes(message []byte, n int, hash Hash) []byte {
 	res := make([]byte, len(message))
 	copy(res, message)
 	for i := 0; i < n; i++ {

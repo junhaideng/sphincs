@@ -2,6 +2,7 @@ package signature
 
 import (
 	"errors"
+	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -21,12 +22,12 @@ func newWinternitzSignature(w int, n Size) (*Winternitz, error) {
 	win := &Winternitz{
 		n:    n,
 		w:    w,
-		hash: Sha256,
+		hash: hash.Sha256,
 		l1:   l1,
 		l2:   l2_,
 	}
 	if n == Size512 {
-		win.hash = Sha512
+		win.hash = hash.Sha512
 	}
 	return win, nil
 }

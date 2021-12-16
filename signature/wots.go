@@ -3,6 +3,7 @@ package signature
 import (
 	"crypto/rand"
 	"errors"
+	"github.com/junhaideng/sphincs/hash"
 	"math"
 )
 
@@ -11,7 +12,7 @@ import (
 type Winternitz struct {
 	n    Size
 	w    int
-	hash Hash
+	hash hash.Hash
 	l1   int
 	l2   int
 }
@@ -33,13 +34,13 @@ func NewWinternitzSignature(w int, n Size) (Signature, error) {
 	win := &Winternitz{
 		n:    n,
 		w:    w,
-		hash: Sha256,
+		hash: hash.Sha256,
 		l1:   l1,
 		l2:   l2_,
 	}
 
 	if n == Size512 {
-		win.hash = Sha512
+		win.hash = hash.Sha512
 	}
 	return win, nil
 }
@@ -60,7 +61,7 @@ func (w *Winternitz) GenerateKey() ([]byte, []byte) {
 	for i := 0; i < l; i++ {
 		rand.Read(sk)
 		private = append(private, sk...)
-		public = append(public, hashTimes(sk, 1<<w.w-1, w.hash)...)
+		public = append(public, hash.HashTimes(sk, 1<<w.w-1, w.hash)...)
 	}
 
 	return private, public
@@ -81,7 +82,7 @@ func (w *Winternitz) Sign(message []byte, sk []byte) []byte {
 
 	n := int(w.n)
 	for i := 0; i < l; i++ {
-		res = append(res, hashTimes(sk[i*n/8:(i+1)*n/8], 1<<w.w-1-int(block[i]), w.hash)...)
+		res = append(res, hash.HashTimes(sk[i*n/8:(i+1)*n/8], 1<<w.w-1-int(block[i]), w.hash)...)
 	}
 	return res
 }
@@ -97,7 +98,7 @@ func (w *Winternitz) Verify(message []byte, pk []byte, signature []byte) bool {
 	for i := 0; i < l; i++ {
 		s := signature[i*n/8 : (i+1)*n/8]
 		p := pk[i*n/8 : (i+1)*n/8]
-		if !equal(p, hashTimes(s, int(block[i]), w.hash)) {
+		if !equal(p, hash.HashTimes(s, int(block[i]), w.hash)) {
 			return false
 		}
 	}
