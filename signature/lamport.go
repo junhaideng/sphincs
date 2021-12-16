@@ -104,31 +104,3 @@ func (l *Lamport) Verify(message []byte, pk []byte, signature []byte) bool {
 	// each n/8 bytes is a sk, there are total n sk
 	return true
 }
-
-//func Verify1(message []byte, public [][]byte, signature []byte) bool {
-//	// 首先进行 hash
-//	v := hash(message)
-//	// 对于每一个 bit
-//	// hash => 32 bytes -> 256 bits
-//	for i := 0; i < len(v); i++ {
-//		n := v[i]
-//		// 对于每一个 bit
-//		for j := 0; j < 8; j++ {
-//			// 第几个 bit
-//			index := i*8 + j
-//			// 最后一 bit 为 0
-//			if n&1 == 0 {
-//				pub := public[index*2]
-//				if !equal(pub, hash(signature[index:index+256])) {
-//					return false
-//				}
-//			} else {
-//				pub := public[index*2+1]
-//				if !equal(pub, hash(signature[index:index+256])) {
-//					return false
-//				}
-//			}
-//		}
-//	}
-//	return true
-//}
