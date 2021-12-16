@@ -12,3 +12,6 @@
 - [x] WOTS
 - [x] HORS
 
+## Merkle Tree
+
+> See: `merkle` :file_folder:
