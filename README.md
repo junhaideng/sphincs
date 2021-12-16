@@ -1,8 +1,10 @@
-## Graduation Project
+# Graduation Project
 
-> Algorithm paper: [SPHINCS: practical stateless hash-based signatures](docs/sphincs.pdf)
+<img src="https://github.com/junhaideng/Graduation-Project/actions/workflows/go.yml/badge.svg" alt="badge">
 
-### One Time Signature algorithm
+> Algorithm Paper: [SPHINCS: practical stateless hash-based signatures](docs/sphincs.pdf)
+
+## One Time Signature algorithm
 
 > See:  `signature` :file_folder:
 
