@@ -1,5 +1,13 @@
 package signature
 
+import "github.com/junhaideng/sphincs/common"
+
+type Size = common.Size
+
+const Size512 = common.Size512
+const Size256 = common.Size256
+const BitSize = common.BitSize
+
 type Signature interface {
 	// GenerateKey generates secret key and public key
 	GenerateKey() (sk []byte, pk []byte)

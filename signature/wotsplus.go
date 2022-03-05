@@ -2,6 +2,7 @@ package signature
 
 import (
 	"errors"
+	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	rand "github.com/junhaideng/sphincs/rand"
 )
@@ -30,13 +31,12 @@ func NewWOTSPlusSignature(w int, n Size, seed []byte, mask []byte) (Signature, e
 		return nil, errors.New("w should be a divisor of 8")
 	}
 	if n != Size256 && n != Size512 {
-		return nil, ErrSizeNotSupport
+		return nil, common.ErrSizeNotSupport
 	}
 
 	// 进行掩码操作，掩码和单个私钥 block 必须一样长
-	// TODO：确认关系
-	if len(mask)*bitSize != int(n)*(1<<w-1) {
-		return nil, ErrSizeNotMatch
+	if len(mask)*BitSize != int(n)*(1<<w-1) {
+		return nil, common.ErrSizeNotMatch
 	}
 
 	// meet above conditions, then n can be divided by w
@@ -115,7 +115,7 @@ func (w *WOTSPlus) Verify(message []byte, pk []byte, signature []byte) bool {
 	for i := 0; i < l; i++ {
 		s := signature[i*n/8 : (i+1)*n/8]
 		p := pk[i*n/8 : (i+1)*n/8]
-		if !equal(p, hash.HashTimesWithMask(s, 1<<w.w-1-int(block[i]), 1<<w.w-1, w.hash, w.mask)) {
+		if !common.Equal(p, hash.HashTimesWithMask(s, 1<<w.w-1-int(block[i]), 1<<w.w-1, w.hash, w.mask)) {
 			return false
 		}
 	}
@@ -138,10 +138,10 @@ func (w WOTSPlus) baseW(input []byte, length int) []byte {
 	// index -> bit
 	var bit = input[index] // current work on
 
-	shift := bitSize
+	shift := BitSize
 	for i := 0; i < length; i++ {
 		if shift == 0 {
-			shift = bitSize
+			shift = BitSize
 			index++
 			bit = input[index]
 		}
@@ -169,17 +169,17 @@ func (w WOTSPlus) checksum(input []byte) []byte {
 		sum += 1<<w.w - 1 - uint64(input[i])
 	}
 
-	count := bitCount(sum)
+	count := common.BitCount(sum)
 	// make sure expected empty zero bits are the least significant bits
 	// or just think this is padding
 	// eg: 1101_01 => 1101_0100, 1101_0001_110 => 1101_0001_1100_0000
-	if count%bitSize != 0 {
-		shift := (count/bitSize+1)*bitSize - count
+	if count%BitSize != 0 {
+		shift := (count/BitSize+1)*BitSize - count
 		sum = sum << shift
 	}
 
 	// convert sum to bytes
-	b := make([]byte, ceil(w.l2*w.w, bitSize))
+	b := make([]byte, ceil(w.l2*w.w, BitSize))
 
 	for i := len(b) - 1; i >= 0; i-- {
 		b[i] = byte(sum & 0xff)

@@ -1,4 +1,4 @@
-package signature
+package common
 
 type Size int
 
@@ -7,4 +7,4 @@ const (
 	Size512 Size = 512
 )
 
-const bitSize int = 8
+const BitSize = 8

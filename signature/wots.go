@@ -3,6 +3,7 @@ package signature
 import (
 	"crypto/rand"
 	"errors"
+	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"math"
 )
@@ -24,7 +25,7 @@ func NewWinternitzSignature(w int, n Size) (Signature, error) {
 		return nil, errors.New("w should be a divisor of 8")
 	}
 	if n != Size256 && n != Size512 {
-		return nil, ErrSizeNotSupport
+		return nil, common.ErrSizeNotSupport
 	}
 
 	// meet above conditions, then n can be divided by w
@@ -98,7 +99,7 @@ func (w *Winternitz) Verify(message []byte, pk []byte, signature []byte) bool {
 	for i := 0; i < l; i++ {
 		s := signature[i*n/8 : (i+1)*n/8]
 		p := pk[i*n/8 : (i+1)*n/8]
-		if !equal(p, hash.HashTimes(s, int(block[i]), w.hash)) {
+		if !common.Equal(p, hash.HashTimes(s, int(block[i]), w.hash)) {
 			return false
 		}
 	}
@@ -121,10 +122,10 @@ func (w Winternitz) baseW(input []byte, length int) []byte {
 	// index -> bit
 	var bit = input[index] // current work on
 
-	shift := bitSize
+	shift := BitSize
 	for i := 0; i < length; i++ {
 		if shift == 0 {
-			shift = bitSize
+			shift = BitSize
 			index++
 			bit = input[index]
 		}
@@ -151,17 +152,17 @@ func (w Winternitz) checksum(input []byte) []byte {
 		sum += 1<<w.w - 1 - uint64(input[i])
 	}
 
-	count := bitCount(sum)
+	count := common.BitCount(sum)
 	// make sure expected empty zero bits are the least significant bits
 	// or just think this is padding
 	// eg: 1101_01 => 1101_0100, 1101_0001_110 => 1101_0001_1100_0000
-	if count%bitSize != 0 {
-		shift := (count/bitSize+1)*bitSize - count
+	if count%BitSize != 0 {
+		shift := (count/BitSize+1)*BitSize - count
 		sum = sum << shift
 	}
 
 	// convert sum to bytes
-	b := make([]byte, ceil(w.l2*w.w, bitSize))
+	b := make([]byte, ceil(w.l2*w.w, BitSize))
 
 	for i := len(b) - 1; i >= 0; i-- {
 		b[i] = byte(sum & 0xff)

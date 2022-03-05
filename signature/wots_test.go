@@ -2,6 +2,7 @@ package signature
 
 import (
 	"errors"
+	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -13,7 +14,7 @@ func newWinternitzSignature(w int, n Size) (*Winternitz, error) {
 		return nil, errors.New("w should be a divisor of 8")
 	}
 	if n != Size256 && n != Size512 {
-		return nil, ErrSizeNotSupport
+		return nil, common.ErrSizeNotSupport
 	}
 	// meet above conditions, then n can be divided by w
 	l1 := int(n) / w

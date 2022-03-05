@@ -1,4 +1,4 @@
-package signature
+package common
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -10,8 +10,8 @@ func TestEqual(t *testing.T) {
 	a := []byte("hello")
 	b := []byte("hello1")
 	c := []byte("hello")
-	assert.True(equal(a, c))
-	assert.False(equal(a, b))
-	assert.False(equal(nil, a))
-	assert.True(equal(nil, nil))
+	assert.True(Equal(a, c))
+	assert.False(Equal(a, b))
+	assert.False(Equal(nil, a))
+	assert.True(Equal(nil, nil))
 }

@@ -2,6 +2,7 @@ package signature
 
 import (
 	"crypto/rand"
+	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 )
 
@@ -15,7 +16,7 @@ type Lamport struct {
 // NewLamportSignature returns lamport signature algorithm
 func NewLamportSignature(n Size) (Signature, error) {
 	if n != Size256 && n != Size512 {
-		return nil, ErrSizeNotSupport
+		return nil, common.ErrSizeNotSupport
 	}
 	lp := &Lamport{n: n, hash: hash.Sha256}
 	if n == Size512 {
@@ -56,13 +57,13 @@ func (l *Lamport) Sign(message []byte, sk []byte) []byte {
 		bits := digest[i]
 
 		// for each bit
-		for j := 0; j < bitSize; j++ {
+		for j := 0; j < BitSize; j++ {
 			// bit index in 256 bits
-			index := i*bitSize + j
+			index := i*BitSize + j
 
 			start := index * 2 * n / 8
 			// if bit is 0
-			if getBit(bits, j) == 0 {
+			if common.GetBit(bits, j) == 0 {
 				res = append(res, sk[start:start+n/8]...)
 			} else {
 				res = append(res, sk[start+n/8:start+n/8*2]...)
@@ -81,21 +82,21 @@ func (l *Lamport) Verify(message []byte, pk []byte, signature []byte) bool {
 	for i := 0; i < len(digest); i++ {
 		bits := digest[i]
 		// for each bit
-		for j := 0; j < bitSize; j++ {
+		for j := 0; j < BitSize; j++ {
 			// bit index in 256 bits
-			index := i*bitSize + j
+			index := i*BitSize + j
 
 			var p []byte
 			start := index * 2 * n / 8
 
 			// if last bit is 0
-			if getBit(bits, j) == 0 {
+			if common.GetBit(bits, j) == 0 {
 				p = pk[start : start+n/8]
 			} else {
 				p = pk[start+n/8 : start+n/8*2]
 			}
 			sk := signature[index*n/8 : (index+1)*n/8]
-			if !equal(p, l.hash(sk)) {
+			if !common.Equal(p, l.hash(sk)) {
 				return false
 			}
 		}

@@ -1,28 +1,45 @@
 package signature
 
 import (
-	"crypto/rand"
 	"errors"
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
+	"github.com/junhaideng/sphincs/merkle"
+	"github.com/junhaideng/sphincs/rand"
+	"math"
 )
 
-// Hors implements Hors OTS
-// see: https://www.cs.bu.edu/~reyzin/papers/one-time-sigs.pdf
-type Hors struct {
+func calc(k, t int) int {
+	min := math.MaxInt
+	res := 0
+	for i := 0; i <= t; i++ {
+		tmp := k*(t-i+1) + 1<<i
+		if tmp <= min {
+			res = i
+			min = tmp
+		}
+	}
+	return res
+}
+
+type Horst struct {
 	// k * log2(t) = n
 	n Size
 	// t should be a power of 2
 	t int
 	// base = log2(t)
 	base int
+	x    int
 	k    int
 	hash hash.Hash
+	seed []byte
+	mask []byte
+	r    rand.Rander
 }
 
-// NewHorsSignature return Hors signature algorithm
+// NewHorstSignature return Horst signature algorithm
 // where t is exponential, and t * k = 256 or t * k = 512
-func NewHorsSignature(t, k int) (Signature, error) {
+func NewHorstSignature(t, k int, seed []byte, mask []byte) (Signature, error) {
 	if !(t > 0 && t%8 == 0 && t <= 64) {
 		return nil, errors.New("t should a positive integer which is divisible by 8 and not greater than 64")
 	}
@@ -32,20 +49,33 @@ func NewHorsSignature(t, k int) (Signature, error) {
 		return nil, errors.New("t * k should be 256 or 512")
 	}
 
-	h := &Hors{
-		n:    n,
-		t:    1 << t,
+	// mask 一共 2n * logt bits
+	if len(mask) != 1 {
+		return nil, common.ErrSizeNotMatch
+	}
+
+	h := &Horst{
+		n: n,
+		// 这才是真正的 t
+		t: 1 << t,
+		// 这是 τ
 		base: t,
 		k:    k,
+		x:    calc(k, t),
 		hash: hash.Sha256,
+		seed: seed,
+		mask: mask,
+		r:    rand.New(seed),
 	}
+
 	if n == Size512 {
 		h.hash = hash.Sha512
 	}
+
 	return h, nil
 }
 
-func (h *Hors) GenerateKey() ([]byte, []byte) {
+func (h *Horst) GenerateKey() ([]byte, []byte) {
 	size := int(h.n) / 8 // n bits => n/8 byte
 	sk := make([]byte, 0, h.t*size)
 	pk := make([]byte, 0, h.t*size)
@@ -53,15 +83,17 @@ func (h *Hors) GenerateKey() ([]byte, []byte) {
 	r := make([]byte, size)
 
 	for i := 0; i < h.t; i++ {
-		rand.Read(r)
+		h.r.Read(r)
 		sk = append(sk, r...)
 		pk = append(pk, h.hash(r)...)
 	}
 
-	return sk, pk
+	// 然后计算根节点的值，使用 pk 构建一个 L-Tree
+	PK := merkle.LTree(pk, size*8, h.hash)
+	return sk, PK
 }
 
-func (h *Hors) Sign(message []byte, sk []byte) []byte {
+func (h *Horst) Sign(message []byte, sk []byte) []byte {
 	digest := h.hash(message)
 	// split digest to k substring, each log2(t) bits
 	index := h.split(digest)
@@ -78,7 +110,7 @@ func (h *Hors) Sign(message []byte, sk []byte) []byte {
 	return signature
 }
 
-func (h *Hors) Verify(message []byte, pk []byte, signature []byte) bool {
+func (h *Horst) Verify(message []byte, pk []byte, signature []byte) bool {
 	digest := h.hash(message)
 	index := h.split(digest)
 
@@ -95,7 +127,7 @@ func (h *Hors) Verify(message []byte, pk []byte, signature []byte) bool {
 
 // log2(t) should be divided by 8
 // ensured by constructor
-func (h *Hors) split(digest []byte) []uint64 {
+func (h *Horst) split(digest []byte) []uint64 {
 	// digest has n bits, split into k substrings, each log2(t) bits
 	res := make([]uint64, h.k*h.base/8)
 

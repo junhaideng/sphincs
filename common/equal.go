@@ -1,6 +1,6 @@
-package signature
+package common
 
-func equal(a []byte, b []byte) bool {
+func Equal(a []byte, b []byte) bool {
 	if len(a) != len(b) {
 		return false
 	}
