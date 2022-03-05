@@ -1,6 +1,8 @@
 package merkle
 
 import (
+	"crypto/sha256"
+	"crypto/sha512"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -46,4 +48,79 @@ func TestTreeAuthenticationPath(t *testing.T) {
 	path4 := tree.AuthenticationPath(1, 1)
 	assert.Equal(2, len(path4))
 	assert.Equal(path4, value[1:])
+}
+
+func BenchmarkTreeAuthenticationPath(b *testing.B) {
+
+	tree, _ := NewTree(3, 256)
+
+	sk := [128]byte{}
+	tree.SetSk(sk[:])
+
+	b.Run("3", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			tree.AuthenticationPath(3, 3)
+		}
+	})
+
+	b.Run("2", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			tree.AuthenticationPath(2, 0)
+		}
+	})
+	b.Run("1", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			tree.AuthenticationPath(1, 0)
+		}
+	})
+	b.Run("4", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			tree.AuthenticationPath(1, 1)
+		}
+	})
+
+}
+
+func BenchmarkCompare(b *testing.B) {
+	sk := make([]byte, 0)
+	for i := 0; i < 16; i++ {
+		sk = append(sk, []byte("0123456789_0123456789_0123456789_0123456789")[:32]...)
+	}
+
+	// 16 * 32
+	b.Run("256-tree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			t, _ := NewTree(4, 256)
+			_ = t.SetSk(sk)
+			_, _ = t.GetPk()
+		}
+	})
+
+	b.Run("256-chain", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			h := sha256.New()
+			h.Write(sk)
+			_ = h.Sum(nil)
+		}
+	})
+
+	for i := 0; i < 16; i++ {
+		sk = append(sk, []byte("0123456789_0123456789_0123456789_0123456789")[:32]...)
+	}
+
+	b.Run("512-tree", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			t, _ := NewTree(4, 512)
+			_ = t.SetSk(sk)
+			_, _ = t.GetPk()
+		}
+	})
+
+	b.Run("512-chain", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			h := sha512.New()
+			h.Write(sk)
+			_ = h.Sum(nil)
+		}
+	})
 }

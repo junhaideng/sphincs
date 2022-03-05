@@ -25,6 +25,7 @@ type Tree struct {
 }
 
 // NewTree returns a tree with height h
+// n specifies hash function
 func NewTree(height int, n int) (*Tree, error) {
 	if n != 512 && n != 256 {
 		return nil, errors.New("n should be 256 or 512")
@@ -90,6 +91,8 @@ func (t *Tree) h(a []byte, b []byte) []byte {
 // AuthenticationPath get authentication path
 // h is the node height, leaves is 1
 // where index is the leave's index from left to right, starts with 0
+// 这里的 h 指的是节点的高度，一般节点都是从叶子节点延申计算上去的
+// 不会从中间开始计算
 func (t *Tree) AuthenticationPath(h int, index int) [][]byte {
 	// index in the tree
 	i := 1<<(t.height-h) - 1 + index
