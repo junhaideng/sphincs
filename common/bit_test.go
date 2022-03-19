@@ -19,6 +19,9 @@ func TestBitCount(t *testing.T) {
 	assert := assert.New(t)
 	var b uint64 = 'a' // 0110_0001
 	assert.Equal(BitCount(b), 7)
+
+	assert.Equal(BitCount(7), 3)
+	assert.Equal(BitCount(8), 4)
 }
 
 func TestToInt(t *testing.T) {

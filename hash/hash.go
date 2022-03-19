@@ -69,3 +69,12 @@ func HashTimesWithMask(message []byte, start, end int, hash Hash, mask []byte) [
 	}
 	return res
 }
+
+// CombineAndHash 首先连接两个字符串，然后进行哈希
+// TODO: 这里涉及的内存分配太多了，能不能尽量减少内存的分配
+func CombineAndHash(a, b []byte, hash Hash) []byte {
+	tmp := make([]byte, len(a)+len(b))
+	copy(tmp[:len(a)], a)
+	copy(tmp[len(a):], b)
+	return hash(tmp)
+}

@@ -128,7 +128,7 @@ func (w *WOTSPlus) Verify(message []byte, pk []byte, signature []byte) bool {
 //	return int(math.Floor(up/float64(w))) + 1
 //}
 
-// interprets an array of bytes as integers in base w.
+// interprets an array of bytes as integers in tau w.
 // w should be a divisor of 8, ensured by constructor `NewWOTSPlusSignature`
 func (w WOTSPlus) baseW(input []byte, length int) []byte {
 	res := make([]byte, length)
@@ -160,7 +160,7 @@ func (w WOTSPlus) baseW(input []byte, length int) []byte {
 //	return res
 //}
 
-// checksum calculate checksum of base w byte array
+// checksum calculate checksum of tau w byte array
 // 计算出来的 sum，首先进行填充，bit 数能够被 w 整除
 func (w WOTSPlus) checksum(input []byte) []byte {
 	var sum uint64
@@ -186,6 +186,6 @@ func (w WOTSPlus) checksum(input []byte) []byte {
 		sum >>= 8
 	}
 
-	// convert checksum to base w
+	// convert checksum to tau w
 	return w.baseW(b, w.l2)
 }
