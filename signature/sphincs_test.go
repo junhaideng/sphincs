@@ -8,7 +8,7 @@ import (
 
 func TestSphincs(t *testing.T) {
 	assert := assert.New(t)
-	seed := make([]byte, 256)
+	seed := make([]byte, 32)
 	for i := 0; i < len(seed); i++ {
 		seed[i] = byte(rand.Intn(128))
 	}

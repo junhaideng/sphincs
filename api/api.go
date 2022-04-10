@@ -1,9 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
+
+var signatureAlgorithms = []string{LAMPORT, HORS, HORST, SPHINCS, WOTS, WOTSPLUS}
 
 func New() *gin.Engine {
 	app := gin.New()
@@ -38,17 +42,30 @@ func setup(app *gin.Engine) {
 	// TODO: test
 	{
 		api.POST("/signature/:algorithm", func(c *gin.Context) {
-
+			start := time.Now()
+			r, err := GenSignature(c.Param("algorithm"), c.Param("message"))
+			//fmt.Printf("%#v\n", r)
+			if err != nil {
+				c.JSON(http.StatusOK, gin.H{
+					"code":    -1,
+					"message": err.Error(),
+					"data":    nil,
+				})
+				return
+			}
 			c.JSON(http.StatusOK, gin.H{
 				"code":    0,
 				"message": "ok",
-				"data": gin.H{
-					"sk":        "sk",
-					"pk":        "pk",
-					"signature": "signature",
-					"cost":      10,
-					"algorithm": c.Param("algorithm"),
-				},
+				"data":    r,
+			})
+			fmt.Printf("algorithm: %x, time: %s\n", c.Param("algorithm"), time.Now().Sub(start))
+		})
+
+		api.GET("/signature/list", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"code":    0,
+				"message": "ok",
+				"data":    signatureAlgorithms,
 			})
 		})
 	}
