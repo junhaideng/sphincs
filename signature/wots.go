@@ -114,7 +114,7 @@ func l2(t1, w int) int {
 
 // interprets an array of bytes as integers in tau w.
 // w should be a divisor of 8, ensured by constructor `NewWinternitzSignature`
-func (w Winternitz) baseW(input []byte, length int) []byte {
+func (w *Winternitz) baseW(input []byte, length int) []byte {
 	res := make([]byte, length)
 
 	index := 0 // index in input
@@ -145,7 +145,7 @@ func ceil(n1, n2 int) int {
 
 // checksum calculate checksum of tau w byte array
 // 计算出来的 sum，首先进行填充，bit 数能够被 w 整除
-func (w Winternitz) checksum(input []byte) []byte {
+func (w *Winternitz) checksum(input []byte) []byte {
 	var sum uint64
 
 	for i := 0; i < len(input); i++ {

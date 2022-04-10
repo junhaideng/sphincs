@@ -44,5 +44,3 @@ func TestLTree4(t *testing.T) {
 	n := 512
 	assert.Equal("b32aaaa44a979603301a530fe4c5e8e70abfb4075c2bd5ef0a7636041b97f9cf6ac007ce57b47a109cd361f893ba5a806d6e366724060902ad03977a69f58063", hex.EncodeToString(LTree(pk, n, hash.Sha512)))
 }
-
-// TODO with masks ?

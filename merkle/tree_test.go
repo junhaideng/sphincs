@@ -3,8 +3,10 @@ package merkle
 import (
 	"crypto/sha256"
 	"crypto/sha512"
+	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
+	"math/rand"
 	"testing"
 )
 
@@ -53,6 +55,45 @@ func TestTreeAuthenticationPath(t *testing.T) {
 	path6 := tree.AuthenticationPath(1, 3)
 	assert.Equal(1, len(path6))
 	assert.Equal(path6, value[:1])
+}
+
+func TestTree_SetSkWithMask(t *testing.T) {
+	// 256 bits * 2(layer) * 2 (left, right)
+	mask := make([]byte, 32*2*2)
+	for i := 0; i < len(mask); i++ {
+		mask[i] = byte(rand.Intn(128))
+	}
+
+	sk := make([]byte, 128)
+	for i := 0; i < len(sk); i++ {
+		sk[i] = byte(rand.Intn(128))
+	}
+
+	tree, err := NewTreeWithMask(3, 256, mask)
+	assert.Nil(t, err)
+
+	err = tree.SetSkWithMask(sk)
+	assert.Nil(t, err)
+
+	path := tree.AuthenticationPath(0, 0)
+
+	assert.Equal(t, 2, len(path))
+
+	root, err := tree.GetPk()
+	assert.Nil(t, err)
+
+	sk_, err := tree.GetLeaf(0)
+	assert.Nil(t, err)
+
+	assert.True(t, common.Equal(sk_, hash.Sha256(sk[:32])))
+
+	root_ := ComputeRootWithMask(sk[:32], 3, path, hash.Sha256, common.Ravel(mask, 256/8))
+
+	assert.True(t, common.Equal(root, root_))
+	t.Logf("tree: %x\n", tree.Nodes())
+	t.Logf("auth: %x\n", path)
+	t.Logf("root: %x", root)
+	t.Logf("root_: %x", root_)
 }
 
 func TestTree_GetLeaf(t *testing.T) {

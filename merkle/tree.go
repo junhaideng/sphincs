@@ -72,7 +72,7 @@ func NewTreeWithMask(height, n int, mask []byte) (*Tree, error) {
 func (t *Tree) SetSk(sk []byte) error {
 	n := t.n / 8
 	if len(sk) != (1<<(t.height-1))*n {
-		return fmt.Errorf("sk should have %d bytes, but got %d", (1<<(t.height-1))*n, len(sk))
+		return fmt.Errorf("sk should have %d bytes, but got %d", (1<<(t.height-1))*n/8, len(sk))
 	}
 
 	// 叶子节点第一个节点的索引值
@@ -110,7 +110,6 @@ func (t *Tree) SetSkWithMask(sk []byte) error {
 	}
 
 	// compute root
-	// TODO 加入 mask 进行计算
 	// mask 一共是 2 * height * n bits
 	// 每一个 mask block 是 n bits
 	// 每一层使用一对 mask
@@ -123,6 +122,8 @@ func (t *Tree) SetSkWithMask(sk []byte) error {
 		left := t.nodes[2*i+1].value
 		right := t.nodes[2*i+2].value
 
+		//fmt.Printf("[mask-tree.go] left: [node %x] [mask %x]\n, right: [node %x] [mask %x]\n", left, t.mask[(2*layer)*t.n/8:(2*layer+1)*t.n/8], right, t.mask[(2*layer+1)*t.n/8:(2*layer+2)*t.n/8])
+
 		t.nodes[i].value = t.h(
 			xor(left, t.mask[(2*layer)*t.n/8:(2*layer+1)*t.n/8]),
 			xor(right, t.mask[(2*layer+1)*t.n/8:(2*layer+2)*t.n/8]),
@@ -132,10 +133,7 @@ func (t *Tree) SetSkWithMask(sk []byte) error {
 }
 
 func (t *Tree) h(a []byte, b []byte) []byte {
-	tmp := make([]byte, len(a)+len(b))
-	copy(tmp[:len(a)], a)
-	copy(tmp[len(a):], b)
-	return t.hash(tmp)
+	return hash.CombineAndHash(a, b, t.hash)
 }
 
 // AuthenticationPath 返回私钥的鉴权路径
@@ -199,26 +197,6 @@ func (t Tree) Print() {
 		}
 		fmt.Println()
 	}
-}
-
-// ComputeRoot 通过鉴权路径和私钥，计算出根节点
-// 注意这里的 path 中的节点数据从上到下
-// index 为 sk 在树中的总索引，并不一定从 0 开始
-func ComputeRoot(sk []byte, index int, path [][]byte, h hash.Hash) []byte {
-	ret := make([]byte, len(sk))
-	copy(ret, h(sk))
-
-	for i := 0; i < len(path); i++ {
-		// 奇数
-		if index&1 != 0 {
-			ret = hash.CombineAndHash(ret, path[i], h)
-		} else {
-			ret = hash.CombineAndHash(path[i], ret, h)
-		}
-		index = (index - 1) / 2
-	}
-
-	return ret
 }
 
 // Layer 返回树中第 i 层的节点数据

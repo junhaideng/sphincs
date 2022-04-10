@@ -3,6 +3,7 @@ package signature
 import (
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
+	"math/rand"
 	"testing"
 )
 
@@ -18,6 +19,9 @@ func TestHorstSignature(t *testing.T) {
 	seed := make([]byte, 256/8)
 	// 2*n*tau/8
 	mask := make([]byte, 2*256*16/8)
+	for i := 0; i < len(mask); i++ {
+		mask[i] = byte(rand.Intn(128))
+	}
 	horst, err := NewHorstSignature(16, 32, seed, mask)
 	assert.Nil(err)
 	sk, pk := horst.GenerateKey()

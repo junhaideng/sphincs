@@ -40,11 +40,60 @@ func TestToInt(t *testing.T) {
 
 func TestNearestPowerOf2(t *testing.T) {
 	assert := assert.New(t)
-	assert.Equal(16, NearestPowerOf2(10))
-	assert.Equal(16, NearestPowerOf2(11))
-	assert.Equal(16, NearestPowerOf2(12))
-	assert.Equal(1, NearestPowerOf2(1))
-	assert.Equal(2, NearestPowerOf2(2))
-	assert.Equal(4, NearestPowerOf2(4))
-	assert.Equal(8, NearestPowerOf2(5))
+	value, power := NearestPowerOf2(10)
+	assert.Equal(16, value)
+	assert.Equal(4, power)
+
+	value, power = NearestPowerOf2(11)
+	assert.Equal(16, value)
+	assert.Equal(4, power)
+
+	value, power = NearestPowerOf2(12)
+	assert.Equal(16, value)
+	assert.Equal(4, power)
+
+	value, power = NearestPowerOf2(1)
+	assert.Equal(1, value)
+	assert.Equal(0, power)
+
+	value, power = NearestPowerOf2(2)
+	assert.Equal(2, value)
+	assert.Equal(1, power)
+
+	value, power = NearestPowerOf2(4)
+	assert.Equal(4, value)
+	assert.Equal(2, power)
+
+	value, power = NearestPowerOf2(5)
+	assert.Equal(8, value)
+	assert.Equal(3, power)
+
+}
+
+func TestChop(t *testing.T) {
+	rand := make([]byte, 32)
+	for i := 0; i < len(rand); i++ {
+		rand[i] = 0
+	}
+	rand[7] = 7 // 0000_0111
+	h := uint64(60)
+	r, _ := Chop(rand, h)
+	assert.Equal(t, uint64(0), r)
+
+	rand[7] = 32 // 0010_0000
+	r, _ = Chop(rand, h)
+	assert.Equal(t, uint64(2), r)
+
+	h = uint64(64)
+	r, _ = Chop(rand, h)
+	assert.Equal(t, uint64(32), r)
+}
+
+func TestCut(t *testing.T) {
+	var i uint64 = 0x00ff000000000000 // 后面连续 12 个 0
+	assert.Equal(t, uint64(255), Cut(i, 64, 8, 8))
+	assert.Equal(t, uint64(15), Cut(i, 64, 12, 4))
+
+	var j uint64 = 0x00000000000000ff // 14 个 0
+	assert.Equal(t, uint64(0), Cut(j, 64, 8, 8))
 }

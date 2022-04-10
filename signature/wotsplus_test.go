@@ -2,6 +2,7 @@ package signature
 
 import (
 	"github.com/stretchr/testify/assert"
+	"math/rand"
 	"testing"
 )
 
@@ -9,6 +10,9 @@ import (
 func TestWinternitzPlushSignature(t *testing.T) {
 	// mask 的大小为 n  * (2^w-1) bits
 	mask := make([]byte, 256/8*(1<<4-1))
+	for i := 0; i < len(mask); i++ {
+		mask[i] = byte(rand.Intn(128))
+	}
 	assert := assert.New(t)
 	w, err := NewWOTSPlusSignature(4, Size256, []byte("fda"), mask)
 	assert.Nil(err)

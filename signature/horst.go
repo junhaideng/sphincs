@@ -2,7 +2,6 @@ package signature
 
 import (
 	"errors"
-	"fmt"
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/junhaideng/sphincs/merkle"
@@ -41,17 +40,43 @@ type Horst struct {
 	tree *merkle.Tree
 }
 
+// 为了方便 SHPINCS 调用
+func newHorst(tau, k int, n int, mask []byte) (*Horst, error) {
+
+	if !(tau > 0 && tau%8 == 0 && tau <= 64) {
+		return nil, errors.New("t should a positive integer which is divisible by 8 and not greater than 64")
+	}
+
+	// tau +1 的高度，叶子节点可以容纳 2 ^ tau 个私钥块
+	tree, err := merkle.NewTreeWithMask(tau+1, n, mask)
+	if err != nil {
+		return nil, err
+	}
+	h := &Horst{
+		n: Size(n),
+		// 这才是真正的 t
+		t: 1 << tau,
+		// 这是 τ
+		tau:  tau,
+		k:    k,
+		x:    calc(k, tau),
+		hash: hash.Sha256,
+		mask: mask, // TODO 其实可以不进行保存
+		tree: tree,
+	}
+
+	if n == 512 {
+		h.hash = hash.Sha512
+	}
+	return h, nil
+}
+
 // NewHorstSignature return Horst signature algorithm
 // where tau is exponential, and tau * k = 256 or tau * k = 512
 // tau 就是树的高度
 // tau * k 是消息摘要的长度，并不是中间哈希值进行哈希得到的摘要长度
 // 在 SPHINCS-256 中 tau*k = 512 = m, n = 256
-// TODO 修改函数返回值签名，这样修改仅为调试
 func NewHorstSignature(tau, k int, seed, mask []byte) (Signature, error) {
-
-	if !(tau > 0 && tau%8 == 0 && tau <= 64) {
-		return nil, errors.New("t should a positive integer which is divisible by 8 and not greater than 64")
-	}
 
 	n := Size(len(seed) * 8)
 
@@ -65,29 +90,13 @@ func NewHorstSignature(tau, k int, seed, mask []byte) (Signature, error) {
 		return nil, common.ErrSizeNotMatch
 	}
 
-	// tau +1 的高度，叶子节点可以容纳 2 ^ tau 个私钥块
-	tree, err := merkle.NewTreeWithMask(tau+1, int(n), mask)
+	h, err := newHorst(tau, k, int(n), mask)
 	if err != nil {
 		return nil, err
 	}
-	h := &Horst{
-		n: n,
-		// 这才是真正的 t
-		t: 1 << tau,
-		// 这是 τ
-		tau:  tau,
-		k:    k,
-		x:    calc(k, tau),
-		hash: hash.Sha256,
-		seed: seed,
-		mask: mask, // TODO 其实可以不进行保存
-		r:    rand.New(seed),
-		tree: tree,
-	}
 
-	if n == Size512 {
-		h.hash = hash.Sha512
-	}
+	h.seed = seed
+	h.r = rand.New(seed)
 
 	return h, nil
 }
@@ -118,7 +127,6 @@ func (h *Horst) Sign(message []byte, sk []byte) []byte {
 	// split message to k substring, each log2(t) bits
 	index := h.split(message)
 
-	// TODO setSk 的时候的时候注意 bug
 	// k 个密钥块，k 个对应的 auth path，τ-x 层的所有节点
 	// 每一个单独的 block 都是 n bits
 	// 构建的 merkle tree 高度实际为 tau + 1
@@ -134,56 +142,26 @@ func (h *Horst) Sign(message []byte, sk []byte) []byte {
 		// 到达 x 层，和算法描述不同的是，这里的根节点为 0 层
 		auth := h.tree.AuthenticationPath(h.x, int(j))
 		signature = append(signature, common.Flatten(auth)...)
+
+		// 这个结果应该是 x 层的
+		//x := merkle.ComputeRootWithMask(sk_, int(j), auth, h.hash, common.Ravel(h.mask[len(h.mask)-(h.tau-h.x)*int(h.n)/8*2:], int(h.n)/8))
+		//fmt.Printf("layer x node: %x\n", x)
 	}
 
 	// 包含 x 层的所有节点，一共有 2^x 个
 	signature = append(signature, common.Flatten(h.tree.Layer(h.x))...)
-
-	//fmt.Printf("%x\n", h.tree.Layer(h.x))
+	//fmt.Printf("layer x: %x\n", common.Flatten(h.tree.Layer(h.x)))
 	return signature
 }
 
 // Verify .
-// TODO
 func (h *Horst) Verify(message []byte, pk []byte, signature []byte) bool {
-	index := h.split(message)
-	n := int(h.n)
-	size := (1 + h.tau - h.x) * n / 8
-	// x 层的节点值
-	// DONE：nodes 和 layer x 节点已经对应
-	nodes := signature[size*h.k:]
-	start := 1<<h.tau - 1
-	// signature 一共有 k + 1 份，最后一份是 x 层的所有节点
-	for i := 0; i < h.k; i++ {
-		j := int(index[i])
-		part := signature[i*size : (i+1)*size]
-
-		// 签名部分[0] 即私钥部分，每一个私钥 n bits 即 n / 8 byte
-		sk := part[:int(h.n)/8]
-
-		// 私钥对应的鉴权路径部分, h.tau-h.x-1 个节点值
-		// 即，每一个路径都是 (h.tau-h.x-1) * n bits
-		auth := common.Ravel(part[int(h.n)/8:], n/8)
-
-		// data 对应的 x 层的节点值
-		data := merkle.ComputeRoot(sk, start+j, auth, h.hash)
-
-		// 私钥在叶子节点的位置为 1 << h.tau - 1 + j (总索引)
-		// 叶子节点和 h.x 层相差了 h.tau-h.x+1 距离
-		nodeIndex := getIndex(1<<h.tau-1+j, h.tau-h.x) - 1<<h.x + 1
-		if nodeIndex >= 64 {
-			fmt.Println("----")
-		}
-
-		// 每一个 node 都是 n/8 bytes
-		node := nodes[nodeIndex*n/8 : (nodeIndex+1)*n/8]
-		// 计算出来的 data 应该
-		if !common.Equal(data, node) {
-			return false
-		}
+	ltree, flag := h.verify(message, signature)
+	if !flag {
+		return false
 	}
 
-	return true
+	return common.Equal(pk, ltree)
 }
 
 // log2(t) should be divided by 8
@@ -205,4 +183,51 @@ func getIndex(index, d int) int {
 		index = (index - 1) >> 1
 	}
 	return index
+}
+
+// verify 实现 SPHINCS 中的函数签名，校验之后返回 pk
+// mask 通过构造函数传入
+func (h *Horst) verify(message []byte, signature []byte) ([]byte, bool) {
+	index := h.split(message)
+	n := int(h.n)
+	size := (1 + h.tau - h.x) * n / 8
+	// x 层的节点值
+	// DONE：nodes 和 layer x 节点已经对应
+	nodes := signature[size*h.k:]
+	start := 1<<h.tau - 1
+	// signature 一共有 k + 1 份，最后一份是 x 层的所有节点
+	for i := 0; i < h.k; i++ {
+		j := int(index[i])
+		part := signature[i*size : (i+1)*size]
+
+		// 签名部分[0] 即私钥部分，每一个私钥 n bits 即 n / 8 byte
+		sk := part[:int(h.n)/8]
+
+		// 私钥对应的鉴权路径部分, h.tau-h.x-1 个节点值
+		// 即，每一个路径都是 (h.tau-h.x-1) * n bits
+		auth := common.Ravel(part[int(h.n)/8:], n/8)
+
+		// data 对应的 x 层的节点值
+		// path 的长度为 h.tau-h.x ，mask 只需要取对应的即可
+		// 注意计算的顺序，需要先用后一部分的mask和path的前面的计算
+		// 因为path中的数据，先取下面层级的，然后取上面的
+		mask := h.mask[len(h.mask)-(h.tau-h.x)*int(h.n)/8*2:]
+		data := merkle.ComputeRootWithMask(sk, start+j, auth, h.hash, common.Ravel(mask, int(h.n)/8))
+
+		// 私钥在叶子节点的位置为 1 << h.tau - 1 + j (总索引)
+		// 叶子节点和 h.x 层相差了 h.tau-h.x+1 距离
+		nodeIndex := getIndex(1<<h.tau-1+j, h.tau-h.x) - 1<<h.x + 1
+
+		// 每一个 node 都是 n/8 bytes
+		node := nodes[nodeIndex*n/8 : (nodeIndex+1)*n/8]
+		// 计算出来的 data 应该
+		if !common.Equal(data, node) {
+			return nil, false
+		}
+	}
+
+	// 计算根节点
+	ltree := merkle.LTreeWithMask(nodes, int(h.n), h.hash, h.mask)
+
+	return ltree, true
 }

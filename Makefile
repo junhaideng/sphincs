@@ -6,3 +6,5 @@ test: signature common hash merkle
 colc:
 	cloc . --not-match-f=".*_test.go"
 
+colc-all:
+	cloc .

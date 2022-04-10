@@ -24,13 +24,11 @@ type WOTSPlus struct {
 	seed []byte
 }
 
-// NewWOTSPlusSignature return WOTS+
-// w should be a divisor of 8
-func NewWOTSPlusSignature(w int, n Size, seed []byte, mask []byte) (Signature, error) {
+func newWOTSPlus(w, n int, mask []byte) (*WOTSPlus, error) {
 	if 8%w != 0 {
 		return nil, errors.New("w should be a divisor of 8")
 	}
-	if n != Size256 && n != Size512 {
+	if n != 256 && n != 512 {
 		return nil, common.ErrSizeNotSupport
 	}
 
@@ -45,19 +43,29 @@ func NewWOTSPlusSignature(w int, n Size, seed []byte, mask []byte) (Signature, e
 	l2_ := l2(l1, w)
 
 	win := &WOTSPlus{
-		n:    n,
+		n:    Size(n),
 		w:    w,
 		hash: hash.Sha256,
 		l1:   l1,
 		l2:   l2_,
 		mask: mask,
-		seed: seed,
-		r:    rand.New(seed),
 	}
 
-	if n == Size512 {
+	if n == 512 {
 		win.hash = hash.Sha512
 	}
+	return win, nil
+}
+
+// NewWOTSPlusSignature return WOTS+
+// w should be a divisor of 8
+func NewWOTSPlusSignature(w int, n Size, seed []byte, mask []byte) (Signature, error) {
+	win, err := newWOTSPlus(w, int(n), mask)
+	if err != nil {
+		return nil, err
+	}
+	win.seed = seed
+	win.r = rand.New(seed)
 	return win, nil
 }
 
@@ -95,7 +103,7 @@ func (w *WOTSPlus) Sign(message []byte, sk []byte) []byte {
 	block = append(block, w.checksum(block)...)
 
 	l := w.l1 + w.l2
-	res := make([]byte, 0, l)
+	res := make([]byte, 0, l*(int(w.n)/8))
 
 	n := int(w.n)
 	for i := 0; i < l; i++ {
@@ -105,6 +113,11 @@ func (w *WOTSPlus) Sign(message []byte, sk []byte) []byte {
 }
 
 func (w *WOTSPlus) Verify(message []byte, pk []byte, signature []byte) bool {
+	pk_ := w.verify(message, signature)
+	return common.Equal(pk, pk_)
+}
+
+func (w *WOTSPlus) verify(message []byte, signature []byte) []byte {
 	digest := w.hash(message)
 	block := w.baseW(digest, w.l1)
 
@@ -112,14 +125,12 @@ func (w *WOTSPlus) Verify(message []byte, pk []byte, signature []byte) bool {
 
 	l := w.l1 + w.l2
 	n := int(w.n)
+	pk := make([]byte, 0, l*n/8)
 	for i := 0; i < l; i++ {
 		s := signature[i*n/8 : (i+1)*n/8]
-		p := pk[i*n/8 : (i+1)*n/8]
-		if !common.Equal(p, hash.HashTimesWithMask(s, 1<<w.w-1-int(block[i]), 1<<w.w-1, w.hash, w.mask)) {
-			return false
-		}
+		pk = append(pk, hash.HashTimesWithMask(s, 1<<w.w-1-int(block[i]), 1<<w.w-1, w.hash, w.mask)...)
 	}
-	return true
+	return pk
 }
 
 //// sphincs l2 calculation
