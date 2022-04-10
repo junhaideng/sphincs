@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
-	rand "github.com/junhaideng/sphincs/rand"
+	"github.com/junhaideng/sphincs/rand"
 )
 
 // WOTSPlus 签名
@@ -33,12 +33,12 @@ func newWOTSPlus(w, n int, mask []byte) (*WOTSPlus, error) {
 	}
 
 	// 进行掩码操作，掩码和单个私钥 block 必须一样长
-	if len(mask)*BitSize != int(n)*(1<<w-1) {
+	if len(mask)*BitSize != n*(1<<w-1) {
 		return nil, common.ErrSizeNotMatch
 	}
 
 	// meet above conditions, then n can be divided by w
-	l1 := int(n) / w
+	l1 := n / w
 
 	l2_ := l2(l1, w)
 

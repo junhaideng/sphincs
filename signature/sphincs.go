@@ -409,7 +409,7 @@ func (s *Sphincs) address(layer, index, keyIdx uint64) []byte {
 		panic("address 的 bit 长度应该是 8 的倍数")
 	}
 	res := make([]byte, length/8)
-	binary.BigEndian.PutUint64(res, uint64(layer)^uint64(index)^uint64(keyIdx))
+	binary.BigEndian.PutUint64(res, layer^index^keyIdx)
 	return res
 }
 
@@ -419,7 +419,7 @@ func (s *Sphincs) calculateP() {
 
 	l1 := int(s.n / s.w)
 
-	l2_ := l2(int(l1), int(s.w))
+	l2_ := l2(l1, int(s.w))
 	ltree := uint64(math.Ceil(math.Log2(float64(l1 + l2_))))
 	num2 := 2 * (s.h + ltree)
 

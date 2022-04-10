@@ -43,7 +43,7 @@ func setup(app *gin.Engine) {
 	{
 		api.POST("/signature/:algorithm", func(c *gin.Context) {
 			start := time.Now()
-			r, err := GenSignature(c.Param("algorithm"), c.Param("message"))
+			r, err := GenSignature(c.Param("algorithm"), []byte(c.Param("message")))
 			//fmt.Printf("%#v\n", r)
 			if err != nil {
 				c.JSON(http.StatusOK, gin.H{
