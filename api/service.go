@@ -3,9 +3,10 @@ package api
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/junhaideng/sphincs/signature"
-	"time"
 )
 
 func GenSignature(algorithm string, message []byte) (*SignatureResponse, error) {

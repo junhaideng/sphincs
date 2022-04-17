@@ -2,15 +2,24 @@ package api
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"io"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
-var signatureAlgorithms = []string{LAMPORT, HORS, HORST, SPHINCS, WOTS, WOTSPLUS}
+var signatureAlgorithms = []string{LAMPORT, WOTS, WOTSPLUS, HORS, HORST, SPHINCS}
 
 func New() *gin.Engine {
+	f, err := os.OpenFile("signature.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic(err)
+	}
 	app := gin.New()
+	app.Use(gin.LoggerWithWriter(io.MultiWriter(f, os.Stdout)))
+	app.Use(gin.Recovery())
 	setup(app)
 	return app
 }
@@ -39,7 +48,6 @@ func setup(app *gin.Engine) {
 	app.Use(cors())
 	api := app.Group("/api")
 
-	// TODO: test
 	{
 		api.POST("/signature/:algorithm", func(c *gin.Context) {
 			start := time.Now()
@@ -58,7 +66,7 @@ func setup(app *gin.Engine) {
 				"message": "ok",
 				"data":    r,
 			})
-			fmt.Printf("algorithm: %x, time: %s\n", c.Param("algorithm"), time.Now().Sub(start))
+			fmt.Printf("algorithm: %s, time: %s\n", c.Param("algorithm"), time.Now().Sub(start))
 		})
 
 		api.GET("/signature/list", func(c *gin.Context) {
