@@ -2,10 +2,11 @@ package signature
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 // just for test

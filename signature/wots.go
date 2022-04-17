@@ -3,9 +3,10 @@ package signature
 import (
 	"crypto/rand"
 	"errors"
+	"math"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
-	"math"
 )
 
 // Winternitz signature
@@ -79,7 +80,7 @@ func (w *Winternitz) Sign(message []byte, sk []byte) []byte {
 	block = append(block, w.checksum(block)...)
 
 	l := w.l1 + w.l2
-	res := make([]byte, 0, l)
+	res := make([]byte, 0, l*int(w.n)/8)
 
 	n := int(w.n)
 	for i := 0; i < l; i++ {

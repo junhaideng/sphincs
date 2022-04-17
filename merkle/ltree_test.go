@@ -2,9 +2,10 @@ package merkle
 
 import (
 	"encoding/hex"
+	"testing"
+
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestLTree1(t *testing.T) {

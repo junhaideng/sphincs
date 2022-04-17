@@ -1,10 +1,11 @@
 package signature
 
 import (
-	"github.com/junhaideng/sphincs/hash"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/junhaideng/sphincs/hash"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_calc(t *testing.T) {

@@ -2,11 +2,12 @@ package signature
 
 import (
 	"errors"
+	"math"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/junhaideng/sphincs/merkle"
 	"github.com/junhaideng/sphincs/rand"
-	"math"
 )
 
 func calc(k, t int) int {

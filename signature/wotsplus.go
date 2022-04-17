@@ -2,6 +2,7 @@ package signature
 
 import (
 	"errors"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/junhaideng/sphincs/rand"

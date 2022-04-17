@@ -1,9 +1,10 @@
 package signature
 
 import (
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSphincs(t *testing.T) {

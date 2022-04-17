@@ -3,6 +3,7 @@ package merkle
 import (
 	"errors"
 	"fmt"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 )

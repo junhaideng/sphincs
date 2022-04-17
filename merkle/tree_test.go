@@ -3,11 +3,12 @@ package merkle
 import (
 	"crypto/sha256"
 	"crypto/sha512"
+	"math/rand"
+	"testing"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"testing"
 )
 
 func TestMerkleTree(t *testing.T) {

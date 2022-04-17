@@ -3,11 +3,12 @@ package signature
 import (
 	"encoding/binary"
 	"errors"
+	"math"
+
 	"github.com/junhaideng/sphincs/common"
 	"github.com/junhaideng/sphincs/hash"
 	"github.com/junhaideng/sphincs/merkle"
 	"github.com/junhaideng/sphincs/rand"
-	"math"
 )
 
 // SPHINCS-256
@@ -30,7 +31,7 @@ import (
 // WOTS+ 的叶子节点层数记为 0
 // HORST 所在的位置层数记为 d
 // 这里为了简单，不设置缓存，仅提供方法思路
-// YOU CAN DO：
+// YOU CAN DO:
 // 1. 设置缓存，避免重复计算 (在计算过程中，很多部分可能是重复的，同一棵 HORST 下的私钥，可能对应同一棵 WOTS 节点，那么这两个密钥对很大部分内容的计算都是一致的)
 type Sphincs struct {
 	n   uint64 // HORST 和 WOTS+ 中哈希值的长度
