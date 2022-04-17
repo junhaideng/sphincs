@@ -10,8 +10,15 @@
 
 - [x] Lamport
 - [x] WOTS
+- [x] WOTS+
 - [x] HORS
+- [x] HORST
+- [x] SPHINCS
 
 ## Merkle Tree
 
 > See: `merkle` :file_folder:
+
+
+## backend services
+> See: `api` AND `cmd` :file_folder:
