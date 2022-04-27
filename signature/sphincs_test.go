@@ -36,3 +36,63 @@ func TestSphincs(t *testing.T) {
 	assert.True(sphincs.Verify(message, pk, sign))
 
 }
+
+type sphincsArgs struct {
+	n, m, h, d, w, tau, k uint64
+	seed                  []byte
+}
+
+func BenchmarkSphincs(b *testing.B) {
+	args := []sphincsArgs{
+		{
+			256, 512, 60, 12, 4, 16, 32, make([]byte, 256), // SPHINCS-256
+		},
+		{
+			256, 512, 60, 6, 4, 16, 32, make([]byte, 256), // 调整 d
+		},
+		{
+			256, 512, 60, 10, 4, 16, 32, make([]byte, 256), // 调整 d
+		},
+		{
+			256, 512, 60, 12, 2, 16, 32, make([]byte, 256), // 调整 w
+		},
+		{
+			256, 512, 60, 12, 8, 16, 32, make([]byte, 256), // 调整 w
+		},
+		{
+			256, 512, 60, 12, 4, 8, 64, make([]byte, 256), // 调整 t, k
+		},
+	}
+	msg := make([]byte, 512)
+	for _, v := range args {
+		// HORST 签名算法
+		horst, err := NewSphincs(v.n, v.m, v.h, v.d, v.w, v.tau, v.k, v.seed)
+		if err != nil {
+			panic(err)
+		}
+		b.Run("key-gen", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, _ = horst.GenerateKey()
+				//sk, pk := w.GenerateKey()
+				//b.Log(len(sk), len(pk))
+			}
+		})
+		sk, pk := horst.GenerateKey()
+		b.Logf("sk: %d, pk: %d\n", len(sk), len(pk))
+
+		b.Run("msg-sign", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = horst.Sign(msg, sk)
+			}
+		})
+
+		sigma := horst.Sign(msg, pk)
+		b.Logf("sigma: %d\n", len(sigma))
+
+		b.Run("verify", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = horst.Verify(msg, pk, sigma)
+			}
+		})
+	}
+}

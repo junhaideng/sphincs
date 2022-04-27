@@ -405,11 +405,11 @@ func (s *Sphincs) Verify(message []byte, pk []byte, signature []byte) bool {
 // TODO 实现，下面的实现方式并不是论文中提到的
 //  因为位数如果不确定的话，不太好处理，针对 256 我们可以单独处理
 func (s *Sphincs) address(layer, index, keyIdx uint64) []byte {
-	length := uint64(math.Ceil(math.Log2(float64(s.d+1)))) + s.h
-	if length%8 != 0 {
-		panic("address 的 bit 长度应该是 8 的倍数")
-	}
-	res := make([]byte, length/8)
+	// length := uint64(math.Ceil(math.Log2(float64(s.d+1)))) + s.h
+	// if length%8 != 0 {
+	// 	panic("address 的 bit 长度应该是 8 的倍数")
+	// }
+	res := make([]byte, 8)
 	binary.BigEndian.PutUint64(res, layer^index^keyIdx)
 	return res
 }

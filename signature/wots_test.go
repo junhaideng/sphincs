@@ -109,3 +109,42 @@ func TestWinternitzSignature4(t *testing.T) {
 
 	assert.True(w.Verify(msg, pk, signature))
 }
+
+// benchmarks
+// go test github.com/junhaideng/sphincs/signature -bench BenchmarkWOTSGenerateKey -benchtime=100000x -benchmem -count=1 -timeout=60m
+func BenchmarkWOTS(b *testing.B) {
+	values := []int{1, 2, 4} // 表示 w 参数取 2, 4, 16
+	for _, v := range values {
+		// WOTS 签名算法
+		w, err := NewWinternitzSignature(v, 256)
+		if err != nil {
+			panic(err)
+		}
+		b.Run("key-gen", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, _ = w.GenerateKey()
+				//sk, pk := w.GenerateKey()
+				//b.Log(len(sk), len(pk))
+			}
+		})
+		sk, pk := w.GenerateKey()
+		b.Logf("sk: %d, pk: %d\n", len(sk), len(pk))
+
+		msg := make([]byte, 256)
+		b.Run("msg-sign", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = w.Sign(msg, sk)
+			}
+		})
+
+		sigma := w.Sign(msg, pk)
+		b.Logf("sigma: %d\n", len(sigma))
+
+		b.Run("verify", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = w.Verify(msg, pk, sigma)
+			}
+		})
+	}
+
+}

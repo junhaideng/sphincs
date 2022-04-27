@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/junhaideng/sphincs/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -69,4 +70,57 @@ func TestWinternitzPlusSignature4(t *testing.T) {
 	signature := w.Sign(msg, sk)
 
 	assert.True(w.Verify(msg, pk, signature))
+}
+
+type wotsArgs struct {
+	w    int
+	n    common.Size
+	seed []byte
+	mask []byte
+}
+
+func BenchmarkWOTSPlus(b *testing.B) {
+	args := []wotsArgs{
+		{
+			1, 256, make([]byte, 256/8), make([]byte, 256*(1<<1-1)/8),
+		},
+		{
+			2, 256, make([]byte, 256/8), make([]byte, 256*(1<<2-1)/8),
+		},
+		{
+			4, 256, make([]byte, 256/8), make([]byte, 256*(1<<4-1)/8),
+		},
+	}
+	msg := make([]byte, 512)
+	for _, v := range args {
+		// WOTS+ 签名算法
+		w, err := NewWOTSPlusSignature(v.w, v.n, v.seed, v.mask)
+		if err != nil {
+			panic(err)
+		}
+		b.Run("key-gen", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, _ = w.GenerateKey()
+				//sk, pk := w.GenerateKey()
+				//b.Log(len(sk), len(pk))
+			}
+		})
+		sk, pk := w.GenerateKey()
+		b.Logf("sk: %d, pk: %d\n", len(sk), len(pk))
+
+		b.Run("msg-sign", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = w.Sign(msg, sk)
+			}
+		})
+
+		sigma := w.Sign(msg, pk)
+		b.Logf("sigma: %d\n", len(sigma))
+
+		b.Run("verify", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = w.Verify(msg, pk, sigma)
+			}
+		})
+	}
 }
