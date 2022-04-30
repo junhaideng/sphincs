@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"encoding/hex"
+	"math/rand"
 	"testing"
 
 	"github.com/junhaideng/sphincs/hash"
@@ -44,4 +45,57 @@ func TestLTree4(t *testing.T) {
 	}
 	n := 512
 	assert.Equal("b32aaaa44a979603301a530fe4c5e8e70abfb4075c2bd5ef0a7636041b97f9cf6ac007ce57b47a109cd361f893ba5a806d6e366724060902ad03977a69f58063", hex.EncodeToString(LTree(pk, n, hash.Sha512)))
+}
+
+// bytes 中的每一个元素长度都是一致的
+func chainHash(bytes []byte, h hash.Hash) []byte {
+	return h(bytes)
+}
+
+func genBytes(row, col int) []byte {
+	ret := make([]byte, row*col)
+	rand.Read(ret)
+	return ret
+}
+
+type TreeAndChainHash struct {
+	pk []byte
+	n  int
+	h  hash.Hash
+}
+
+func BenchmarkTreeHashAndChainHash(b *testing.B) {
+	n := 10
+	args := make([]TreeAndChainHash, 0)
+	start := 6
+	end := start + n
+	for i := start; i < end; i++ {
+		args = append(args, TreeAndChainHash{
+			genBytes(1<<i, 256),
+			256,
+			hash.Sha256,
+		})
+	}
+
+	for i := 0; i < end; i++ {
+		args = append(args, TreeAndChainHash{
+			genBytes(1<<i, 512),
+			512,
+			hash.Sha512,
+		})
+	}
+
+	for _, arg := range args {
+		b.Run("chain hash", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = chainHash(arg.pk, arg.h)
+			}
+		})
+
+		b.Run("tree hash", func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = LTree(arg.pk, arg.n, arg.h)
+			}
+		})
+	}
 }
