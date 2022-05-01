@@ -75,6 +75,12 @@ func BenchmarkHorst(b *testing.B) {
 		{
 			8, 64, make([]byte, 32), make([]byte, 32*2*8),
 		},
+		{
+			16, 16, make([]byte, 32), make([]byte, 32*2*16),
+		},
+		{
+			8, 32, make([]byte, 32), make([]byte, 32*2*8),
+		},
 	}
 	msg := make([]byte, 512)
 	for _, v := range args {
