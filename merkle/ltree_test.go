@@ -65,21 +65,20 @@ type TreeAndChainHash struct {
 }
 
 func BenchmarkTreeHashAndChainHash(b *testing.B) {
-	n := 10
 	args := make([]TreeAndChainHash, 0)
-	start := 6
-	end := start + n
-	for i := start; i < end; i++ {
+	start := 6 
+	end := 14
+	for i := start; i <= end; i++ {
 		args = append(args, TreeAndChainHash{
-			genBytes(1<<i, 256),
+			genBytes(1<<i, 32), // 32 bytes = 256 bits
 			256,
 			hash.Sha256,
 		})
 	}
 
-	for i := 0; i < end; i++ {
+	for i := start; i <= end; i++ {
 		args = append(args, TreeAndChainHash{
-			genBytes(1<<i, 512),
+			genBytes(1<<i, 64),  // 64 bytes = 512 bits
 			512,
 			hash.Sha512,
 		})
