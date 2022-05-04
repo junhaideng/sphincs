@@ -1,4 +1,4 @@
-# Graduation Project
+# Sphincs
 
 <img src="https://github.com/junhaideng/Graduation-Project/actions/workflows/go.yml/badge.svg" alt="badge">
 
@@ -22,3 +22,5 @@
 
 ## backend services
 > See: `api` AND `cmd` :file_folder:
+> Run: go run cmd/main.go
+> Frontend see: [sphincs-frontend](https://github.com/junhaideng/sphincs-frontend)
