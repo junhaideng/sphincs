@@ -31,25 +31,25 @@ jobs:
       - name: "benchmark"
         run: go test github.com/junhaideng/sphincs/signature -v -bench BenchmarkWOTSPlus -benchtime=10000x -benchmem -count=1 -timeout=24h -cpu 1 
   
-  bechmark-horst:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: "^1.17"
-      - name: "benchmark"
-        run: go test github.com/junhaideng/sphincs/signature -v -bench BenchmarkHorst -benchtime=10000x -benchmem -count=1 -timeout=24h -cpu 1
+  # bechmark-horst:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-go@v2
+  #       with:
+  #         go-version: "^1.17"
+  #     - name: "benchmark"
+  #       run: go test github.com/junhaideng/sphincs/signature -v -bench BenchmarkHorst -benchtime=10000x -benchmem -count=1 -timeout=24h -cpu 1
   
-  bechmark-sphincs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: "^1.17"
-      - name: "benchmark"
-        run: go test github.com/junhaideng/sphincs/signature -v -bench BenchmarkSphincs -benchtime=1000x -benchmem -count=1 -timeout=24h -cpu 1
+  # bechmark-sphincs:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-go@v2
+  #       with:
+  #         go-version: "^1.17"
+  #     - name: "benchmark"
+  #       run: go test github.com/junhaideng/sphincs/signature -v -bench BenchmarkSphincs -benchtime=1000x -benchmem -count=1 -timeout=24h -cpu 1
 
   bechmark-hash:
     runs-on: ubuntu-latest
