@@ -2,6 +2,8 @@ package merkle
 
 import (
 	"encoding/hex"
+	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 
@@ -64,21 +66,28 @@ type TreeAndChainHash struct {
 	h  hash.Hash
 }
 
+func calcL(n, w int) int {
+	l1 := n / w
+	up := math.Log2(float64(l1 * (1<<w - 1)))
+	l2 := int(math.Floor(up/float64(w))) + 1 + l1
+	fmt.Println(l2)
+	return l2
+}
+
 func BenchmarkTreeHashAndChainHash(b *testing.B) {
 	args := make([]TreeAndChainHash, 0)
-	start := 6 
-	end := 14
-	for i := start; i <= end; i++ {
+	w := []int{1, 2, 4, 8}
+	for _, i := range w {
 		args = append(args, TreeAndChainHash{
-			genBytes(1<<i, 32), // 32 bytes = 256 bits
+			genBytes(calcL(256, i), 32), // 32 bytes = 256 bits
 			256,
 			hash.Sha256,
 		})
 	}
 
-	for i := start; i <= end; i++ {
+	for _, i := range w {
 		args = append(args, TreeAndChainHash{
-			genBytes(1<<i, 64),  // 64 bytes = 512 bits
+			genBytes(calcL(512, i), 64), // 64 bytes = 512 bits
 			512,
 			hash.Sha512,
 		})
