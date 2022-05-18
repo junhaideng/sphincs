@@ -3,24 +3,14 @@ package hash
 import (
 	"crypto/sha256"
 	"crypto/sha512"
-	"hash"
-	"sync"
 )
-
-var pool = sync.Pool{New: func() interface{} {
-	return sha256.New()
-}}
 
 // Hash maps data of arbitrary size to fixed-size values
 type Hash func([]byte) []byte
 
 // Sha256 maps data to 256 bits
 func Sha256(b []byte) []byte {
-	s := pool.Get().(hash.Hash)
-	defer func() {
-		s.Reset()
-		pool.Put(s)
-	}()
+	s := sha256.New()
 	s.Write(b)
 	return s.Sum(nil)
 }
