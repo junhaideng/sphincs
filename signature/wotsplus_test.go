@@ -90,6 +90,9 @@ func BenchmarkWOTSPlus(b *testing.B) {
 		{
 			4, 256, make([]byte, 256/8), make([]byte, 256*(1<<4-1)/8),
 		},
+		{
+			8, 256, make([]byte, 256/8), make([]byte, 256*(1<<8-1)/8),
+		},
 	}
 	msg := make([]byte, 512)
 	for _, v := range args {

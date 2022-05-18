@@ -65,33 +65,32 @@ func BenchmarkSphincs(b *testing.B) {
 	}
 	msg := make([]byte, 512)
 	for _, v := range args {
-		// HORST 签名算法
-		horst, err := NewSphincs(v.n, v.m, v.h, v.d, v.w, v.tau, v.k, v.seed)
+		sphincs, err := NewSphincs(v.n, v.m, v.h, v.d, v.w, v.tau, v.k, v.seed)
 		if err != nil {
 			panic(err)
 		}
 		b.Run("key-gen", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = horst.GenerateKey()
+				_, _ = sphincs.GenerateKey()
 				//sk, pk := w.GenerateKey()
 				//b.Log(len(sk), len(pk))
 			}
 		})
-		sk, pk := horst.GenerateKey()
+		sk, pk := sphincs.GenerateKey()
 		b.Logf("sk: %d, pk: %d\n", len(sk), len(pk))
 
 		b.Run("msg-sign", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = horst.Sign(msg, sk)
+				_ = sphincs.Sign(msg, sk)
 			}
 		})
 
-		sigma := horst.Sign(msg, pk)
+		sigma := sphincs.Sign(msg, pk)
 		b.Logf("sigma: %d\n", len(sigma))
 
 		b.Run("verify", func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = horst.Verify(msg, pk, sigma)
+				_ = sphincs.Verify(msg, pk, sigma)
 			}
 		})
 	}
